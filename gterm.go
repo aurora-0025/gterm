@@ -14,29 +14,54 @@ import (
 	"github.com/mazznoer/csscolorparser"
 )
 
-//var out []string
+var out []string
 
-func generateGradient(colorSlice []float64, length float64) []float64 {
-	fmt.Println(length)
-	result := []float64{}
-	var dataLength = (length - 2) / (float64(len(colorSlice) - 1))
+func splitLength(x, n int) []int {
+	dataLength := []int{}
+	if x < n {
+		fmt.Println("error")
+	} else if x%n == 0 {
+		for i := 0; i < n; i++ {
+			dataLength = append(dataLength, x/2)
+		}
+	} else {
+		var zp = n - (x % n)
+		var pp = x / n
+		for i := 0; i < n; i++ {
+			if i >= zp {
+				dataLength = append(dataLength, (pp + 1))
+			} else {
+				dataLength = append(dataLength, pp)
+			}
+
+		}
+	}
+	return dataLength
+}
+
+func generateGradient(colorSlice []float32, length float32) []float32 {
+	fmt.Println(length - 1)
+	result := []float32{}
+	var dataLength = splitLength(int(length-2), (len(colorSlice) - 1))
+	result = append(result, colorSlice[0])
+
 	fmt.Println(dataLength)
 
-	if (length - 2) == float64(len(colorSlice)) {
+	if (length - 1) == float32(len(colorSlice)) {
 		result = append(result, colorSlice...)
 	} else {
 		for index := range colorSlice {
 			if index == len(colorSlice)-1 {
 				break
 			}
-			newColorSlice := []float64{colorSlice[index], colorSlice[index+1]}
+			newColorSlice := []float32{colorSlice[index], colorSlice[index+1]}
 			if newColorSlice[0] == newColorSlice[1] {
-				for i := 0; i < int(dataLength); i++ {
+				for i := 0; i < int(dataLength[index]); i++ {
 					result = append(result, newColorSlice[0])
 				}
 			} else {
 				//Arithmetic Progression Taught in school finally came to use
-				var commonDifference = (newColorSlice[len(newColorSlice)-1] - newColorSlice[0]) / float64(dataLength)
+				var commonDifference = (newColorSlice[len(newColorSlice)-1] - newColorSlice[0]) / float32(dataLength[index])
 				var color = newColorSlice[0]
 				for int(color) != int(newColorSlice[(len(newColorSlice)-1)]) {
 					color = color + commonDifference
@@ -79,9 +104,9 @@ func main() {
 		output = append(output, input)
 	}
 
-	var rSlice []float64
-	var gSlice []float64
-	var bSlice []float64
+	var rSlice []float32
+	var gSlice []float32
+	var bSlice []float32
 
 	for _, color := range colors {
 		c, err := csscolorparser.Parse(color)
@@ -90,9 +115,9 @@ func main() {
 			return
 		}
 		var r, g, b, _ = c.RGBA255()
-		rSlice = append(rSlice, float64(r))
-		gSlice = append(gSlice, float64(g))
-		bSlice = append(bSlice, float64(b))
+		rSlice = append(rSlice, float32(r))
+		gSlice = append(gSlice, float32(g))
+		bSlice = append(bSlice, float32(b))
 
 		fmt.Println(rSlice)
 		fmt.Println(gSlice)
@@ -101,18 +126,18 @@ func main() {
 	}
 
 	chars := strings.Split(string(output), "")
-	var length float64 = float64(len(chars))
+	var length float32 = float32(len(chars))
 
-	fmt.Println(generateGradient(rSlice, length))
-	// var gGrad = generateGradient(gSlice, length)
-	// var bGrad = generateGradient(bSlice, length)
+	var rGrad = generateGradient(rSlice, length)
+	var gGrad = generateGradient(gSlice, length)
+	var bGrad = generateGradient(bSlice, length)
 
 	// fmt.Println(rGrad)
 
-	// for i := 0; i < len(rGrad); i++ {
-	// 	var red, green, blue = uint8(rGrad[i]), uint8(gGrad[i]), uint8(bGrad[i])
-	// 	var ele = chars[i]
-	// 	out = append(out, fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s\x1b[0m", red, green, blue, ele))
-	// }
-	// fmt.Println(strings.Join(out[:], ""))
+	for i := 0; i < len(rGrad); i++ {
+		var red, green, blue = uint8(rGrad[i]), uint8(gGrad[i]), uint8(bGrad[i])
+		var ele = chars[i]
+		out = append(out, fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s\x1b[0m", red, green, blue, ele))
+	}
+	fmt.Println(strings.Join(out[:], ""))
 }
